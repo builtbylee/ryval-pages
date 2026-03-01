@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ryval — Technical Deep Dive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"/>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css"/>
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css"/>
+<style>
+  /* ═══════════════════════════════════════════════════════
+     PREMIUM DARK — Monochromatic + single blue accent
+     ═══════════════════════════════════════════════════════ */
+  :root {
+    --bg-deep: #09090b;
+    --bg-elevated: #111113;
+    --bg-card: #18181b;
+    --bg-card-hover: #1f1f23;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.10);
+    --border-accent: rgba(107, 141, 239, 0.20);
+    --text-primary: #fafafa;
+    --text-secondary: rgba(255, 255, 255, 0.55);
+    --text-muted: rgba(255, 255, 255, 0.30);
+    --accent: #6B8DEF;
+    --accent-soft: rgba(107, 141, 239, 0.10);
+    --accent-glow: rgba(107, 141, 239, 0.15);
+    --connector: rgba(255, 255, 255, 0.10);
+    --slide-w: 1280px;
+    --slide-h: 720px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #050505;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck { max-width: var(--slide-w); margin: 0 auto; padding: 40px 0; }
+
+  .slide {
+    width: var(--slide-w);
+    min-height: var(--slide-h);
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 48px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide-number {
+    position: absolute;
+    bottom: 24px;
+    right: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Typography ── */
+  .display { font-size: 56px; font-weight: 800; letter-spacing: -0.035em; line-height: 1.05; }
+  .heading { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  .heading-lg { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+  .subhead { font-size: 17px; font-weight: 400; color: var(--text-secondary); line-height: 1.65; max-width: 520px; }
+  .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .label-accent { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Cards ── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: border-color 0.3s ease;
+  }
+  .glass-card:hover { border-color: var(--border-strong); }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .card-body { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ── Pills ── */
+  .pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .pill-accent { background: var(--accent-soft); color: var(--accent); border-color: var(--border-accent); }
+
+  /* ── Diagram ── */
+  .diagram-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    transition: border-color 0.3s ease;
+  }
+  .diagram-box-accent { border-color: var(--border-accent); }
+  .diagram-box .box-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .diagram-box .box-sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .diagram-layer {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px 18px;
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .diagram-layer-accent {
+    border-color: rgba(107, 141, 239, 0.12);
+    background: rgba(107, 141, 239, 0.02);
+  }
+  .connector-v { width: 1px; background: var(--connector); margin: 0 auto; }
+
+  /* ── Score Bars ── */
+  .score-bar { display: flex; align-items: center; gap: 12px; }
+  .score-bar-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); width: 80px; text-align: right; }
+  .score-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); opacity: 0.7; }
+  .score-bar-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; width: 36px; color: var(--text-secondary); }
+
+  /* ── Stats ── */
+  .stat { text-align: center; }
+  .stat-value { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--text-muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* ── Code ── */
+  .code-block { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.8; color: var(--text-secondary); }
+  .code-block .kw { color: var(--accent); }
+  .code-block .fn { color: var(--text-primary); }
+  .code-block .cmt { color: var(--text-muted); font-style: italic; }
+
+  /* ── Table ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 14px 16px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .data-table tr:hover td { color: var(--text-primary); }
+
+  /* ── Timeline ── */
+  .timeline-item { display: flex; gap: 16px; position: relative; padding-bottom: 20px; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.15); margin-top: 6px; flex-shrink: 0; position: relative; z-index: 1; }
+  .timeline-dot-accent { background: var(--accent); }
+  .timeline-item:not(:last-child)::before { content: ''; position: absolute; left: 3.5px; top: 14px; bottom: 0; width: 1px; background: rgba(255,255,255,0.06); }
+
+  /* ── Layouts ── */
+  .slide-center { display: flex; align-items: center; justify-content: center; text-align: center; min-height: var(--slide-h); padding: 80px; position: relative; }
+  .slide-padded { padding: 56px 64px; display: flex; flex-direction: column; justify-content: center; min-height: var(--slide-h); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; min-height: var(--slide-h); }
+  .split-wide { display: grid; grid-template-columns: 1.3fr 1fr; min-height: var(--slide-h); }
+  .right-wide { display: grid; grid-template-columns: 1fr 1.3fr; min-height: var(--slide-h); }
+  .split-side { padding: 56px 52px; display: flex; flex-direction: column; justify-content: center; }
+
+  /* ── Noise overlay ── */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+    background-size: 256px;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 20px;
+  }
+
+  .gradient-line { height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.2; }
+  .divider { height: 1px; background: var(--border); }
+
+  @media print {
+    body { background: #000; }
+    .slide { page-break-after: always; margin: 0; border: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 1 — TITLE
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 0;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(107,141,239,0.06) 0%, transparent 70%);"></div>
+    <svg width="100%" height="100%" style="position: absolute; inset: 0; opacity: 0.3;">
+      <pattern id="dots" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="24" cy="24" r="0.5" fill="rgba(255,255,255,0.08)"/></pattern>
+      <rect width="100%" height="100%" fill="url(#dots)"/>
+    </svg>
+    <!-- Subtle HR pulse line -->
+    <svg width="1280" height="720" viewBox="0 0 1280 720" style="position: absolute; inset: 0;">
+      <polyline points="0,400 260,400 280,340 300,460 320,380 340,400 640,400 660,320 680,480 700,370 720,400 1000,400 1020,330 1040,470 1060,380 1080,400 1280,400" stroke="rgba(107,141,239,0.08)" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+  <div class="slide-center" style="z-index: 1;">
+    <div>
+      <div class="label-accent" style="margin-bottom: 20px; letter-spacing: 0.2em;">Technical Deep Dive</div>
+      <h1 class="display" style="margin-bottom: 20px;">Ryval</h1>
+      <p class="subhead" style="margin: 0 auto 40px; max-width: 480px;">
+        A fitness tracking platform built for real athletes. React Native, BLE heart rate, offline-first architecture.
+      </p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <span class="pill">React Native</span>
+        <span class="pill">Expo SDK 54</span>
+        <span class="pill">TypeScript</span>
+        <span class="pill pill-accent">BLE HR</span>
+      </div>
+      <div style="margin-top: 48px; color: var(--text-muted); font-size: 12px;">
+        <span class="mono">v3.1.0</span> &nbsp;&middot;&nbsp; March 2026 &nbsp;&middot;&nbsp; iOS + Android
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">01 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 2 — WHAT IS RYVAL (Left-Heavy)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="split-wide" style="z-index: 1;">
+    <div class="split-side">
+      <div class="label-accent" style="margin-bottom: 8px;">Overview</div>
+      <h2 class="heading-lg" style="margin-bottom: 20px;">
+        Your toughest opponent is<br><span style="color: var(--accent);">yesterday's you</span>
+      </h2>
+      <p class="subhead" style="font-size: 15px; margin-bottom: 32px;">
+        An offline-first fitness tracker with real-time heart rate monitoring, intelligent workout comparison, and social competition.
+      </p>
+      <div style="display: flex; gap: 40px;">
+        <div class="stat">
+          <div class="stat-value" style="color: var(--accent);">150+</div>
+          <div class="stat-label">Exercises</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">11</div>
+          <div class="stat-label">Muscle Groups</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">1000</div>
+          <div class="stat-label">Fitness Score</div>
+        </div>
+      </div>
+    </div>
+    <div class="split-side" style="border-left: 1px solid var(--border); gap: 12px;">
+      <div class="glass-card" style="padding: 18px 22px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); flex-shrink: 0;"><i class="ph-bold ph-heartbeat" style="color: var(--accent); font-size: 20px;"></i></div>
+          <div><div class="card-title">Live HR Tracking</div><div class="card-body">BLE heart rate with background capture via native foreground service</div></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px 22px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0;"><i class="ph-bold ph-sword" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+          <div><div class="card-title">You vs You</div><div class="card-body">Compete against your last session, personal best, or average of last 5</div></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px 22px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0;"><i class="ph-bold ph-chart-line-up" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+          <div><div class="card-title">Smart Analytics</div><div class="card-body">Fitness Score (0-1000), muscle heatmaps, body comp charts</div></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px 22px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0;"><i class="ph-bold ph-users-three" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+          <div><div class="card-title">Social Competition</div><div class="card-body">Friend codes, shared workouts, challenges, activity feed</div></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px 22px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); flex-shrink: 0;"><i class="ph-bold ph-database" style="color: var(--text-secondary); font-size: 20px;"></i></div>
+          <div><div class="card-title">Offline-First</div><div class="card-body">SQLite local DB, auto-backup — cloud is optional</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">02 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 3 — ARCHITECTURE OVERVIEW (Full-Width)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="slide-padded" style="padding: 48px 56px; z-index: 1;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+      <div>
+        <div class="label-accent" style="margin-bottom: 8px;">Architecture</div>
+        <h2 class="heading">System Overview</h2>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span class="pill">Expo Router</span>
+        <span class="pill">React Query</span>
+        <span class="pill">SQLite</span>
+        <span class="pill">Firebase</span>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 0;">
+      <!-- Row 1: UI Layer -->
+      <div class="diagram-layer">
+        <div class="label" style="margin-bottom: 14px;">UI Layer — Expo Router</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+          <div class="diagram-box"><div class="box-title">Tab Navigator</div><div class="box-sub">5 screens</div></div>
+          <div class="diagram-box diagram-box-accent"><div class="box-title">Workout Engine</div><div class="box-sub">[id].tsx</div></div>
+          <div class="diagram-box"><div class="box-title">Social Screens</div><div class="box-sub">Friends / Feed / Challenges</div></div>
+          <div class="diagram-box"><div class="box-title">Stats & Progress</div><div class="box-sub">Charts / Heatmap / Records</div></div>
+        </div>
+      </div>
+      <!-- Connector -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+        <div style="display: flex; flex-direction: column; align-items: center;"><div class="connector-v" style="height: 20px;"></div><span class="mono" style="font-size: 9px; color: var(--text-muted);">queries</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center;"><div class="connector-v" style="height: 20px;"></div><span class="mono" style="font-size: 9px; color: var(--text-muted);">mutations</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center;"><div class="connector-v" style="height: 20px;"></div><span class="mono" style="font-size: 9px; color: var(--text-muted);">cache</span></div>
+        <div></div>
+      </div>
+      <!-- Row 2: State + Data -->
+      <div class="diagram-layer">
+        <div class="label" style="margin-bottom: 14px;">State & Data Layer</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+          <div class="diagram-box"><div class="box-title">React Query</div><div class="box-sub">+ Persisted Client</div></div>
+          <div class="diagram-box"><div class="box-title">Zustand</div><div class="box-sub">Preferences</div></div>
+          <div class="diagram-box diagram-box-accent"><div class="box-title">SQLite</div><div class="box-sub">12 versions / 30+ tables</div></div>
+          <div class="diagram-box"><div class="box-title">AsyncStorage</div><div class="box-sub">Cache</div></div>
+        </div>
+      </div>
+      <!-- Connector -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: flex; flex-direction: column; align-items: center;"><div class="connector-v" style="height: 20px;"></div><span class="mono" style="font-size: 9px; color: var(--text-muted);">native APIs</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center;"><div class="connector-v" style="height: 20px;"></div><span class="mono" style="font-size: 9px; color: var(--text-muted);">REST / SDK</span></div>
+      </div>
+      <!-- Row 3: Native + Cloud -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="diagram-layer">
+          <div class="label" style="margin-bottom: 14px;">Native Layer</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">BLE Manager</div><div class="box-sub">HR Monitor</div></div>
+            <div class="diagram-box diagram-box-accent"><div class="box-title" style="font-size: 12px;">Foreground Service</div><div class="box-sub">Android Kotlin</div></div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">GPS Engine</div><div class="box-sub">Kalman Filter</div></div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Health Connect</div><div class="box-sub">Android</div></div>
+          </div>
+        </div>
+        <div class="diagram-layer">
+          <div class="label" style="margin-bottom: 14px;">Cloud — Firebase</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Auth</div><div class="box-sub">Magic Link</div></div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Firestore</div><div class="box-sub">Profiles / Friends</div></div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Storage</div><div class="box-sub">Avatars</div></div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">OneSignal</div><div class="box-sub">Push</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">03 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 4 — NAVIGATION (Right-Heavy)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="right-wide" style="z-index: 1;">
+    <div class="split-side">
+      <div class="label-accent" style="margin-bottom: 8px;">Navigation</div>
+      <h2 class="heading" style="margin-bottom: 16px;">File-Based<br>Routing</h2>
+      <p class="subhead" style="font-size: 14px; margin-bottom: 28px;">
+        Expo Router provides file-system routing with deep linking. Tab navigator with 5 main screens and modal stacks.
+      </p>
+      <div class="code-block" style="font-size: 11.5px;">
+<span class="cmt">// Route structure</span>
+<span class="kw">app/</span>
+├── <span class="fn">(tabs)/</span>
+│   ├── index      <span class="cmt">// Home</span>
+│   ├── workouts   <span class="cmt">// Library</span>
+│   ├── history    <span class="cmt">// Sessions</span>
+│   ├── progress   <span class="cmt">// Analytics</span>
+│   └── friends    <span class="cmt">// Social</span>
+├── <span class="fn">workout/</span>[id]  <span class="cmt">// Live</span>
+├── <span class="fn">session/</span>[id]  <span class="cmt">// Detail</span>
+├── <span class="fn">stats/</span>*       <span class="cmt">// Premium</span>
+└── settings     <span class="cmt">// Config</span>
+      </div>
+    </div>
+    <div class="split-side" style="border-left: 1px solid var(--border);">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-house" style="color: var(--accent); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Home</div>
+          <div class="card-body" style="font-size: 11px;">Weekly goals, Fitness Score, You vs You streak</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-barbell" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Workouts</div>
+          <div class="card-body" style="font-size: 11px;">Library with search, filter, schedule, create</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-clock-counter-clockwise" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">History</div>
+          <div class="card-body" style="font-size: 11px;">Session list, bookmarks, HR chart overlay</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-chart-line-up" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Progress</div>
+          <div class="card-body" style="font-size: 11px;">Body comp, muscle heatmap, personal records</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-users-three" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Friends</div>
+          <div class="card-body" style="font-size: 11px;">Friend list, activity feed, challenges</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-fire" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Session Detail</div>
+          <div class="card-body" style="font-size: 11px;">Scorecard, effort breakdown, HR timeline</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-gear-six" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Settings</div>
+          <div class="card-body" style="font-size: 11px;">HR monitor, backup, units, notifications</div>
+        </div>
+        <div class="glass-card" style="padding: 16px;">
+          <i class="ph-bold ph-lightning" style="color: var(--accent); margin-bottom: 8px; display: block; font-size: 20px;"></i>
+          <div class="card-title" style="font-size: 13px;">Quick Start</div>
+          <div class="card-body" style="font-size: 11px;">Pinned workouts, one-tap autostart</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">04 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 5 — YOU VS YOU (Split)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="split" style="z-index: 1;">
+    <div class="split-side" style="padding-right: 36px;">
+      <div class="label-accent" style="margin-bottom: 8px;">Core Feature</div>
+      <h2 class="heading-lg" style="margin-bottom: 16px;">
+        You vs You<br><span style="color: var(--accent);">Competition Engine</span>
+      </h2>
+      <p class="subhead" style="font-size: 14px; margin-bottom: 28px;">
+        Every workout is scored against a chosen opponent — your last session, personal best, or a friend's shared workout.
+      </p>
+      <div style="margin-bottom: 24px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Opponent Types</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <span class="pill pill-accent">Last Session</span>
+          <span class="pill">Personal Best</span>
+          <span class="pill">Avg of 5</span>
+          <span class="pill">Any Workout</span>
+          <span class="pill">Friend's Workout</span>
+        </div>
+      </div>
+      <!-- Scoring Flow — HTML/CSS horizontal pipeline -->
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px;">Scoring Flow</div>
+      <div style="display: flex; align-items: center; gap: 0;">
+        <div class="diagram-box" style="padding: 10px 14px; flex: 1;"><div class="box-title" style="font-size: 11px;">Workout Complete</div></div>
+        <div style="color: var(--text-muted); padding: 0 6px; font-size: 12px;">→</div>
+        <div class="diagram-box" style="padding: 10px 14px; flex: 1;"><div class="box-title" style="font-size: 11px;">Detect Type</div></div>
+        <div style="color: var(--text-muted); padding: 0 6px; font-size: 12px;">→</div>
+        <div class="diagram-box" style="padding: 10px 14px; flex: 1;"><div class="box-title" style="font-size: 11px;">Apply Weights</div></div>
+        <div style="color: var(--text-muted); padding: 0 6px; font-size: 12px;">→</div>
+        <div class="diagram-box" style="padding: 10px 14px; flex: 1;"><div class="box-title" style="font-size: 11px;">Compare</div></div>
+        <div style="color: var(--text-muted); padding: 0 6px; font-size: 12px;">→</div>
+        <div class="diagram-box diagram-box-accent" style="padding: 10px 14px; flex: 1;"><div class="box-title" style="font-size: 11px;">Win / Loss</div></div>
+      </div>
+    </div>
+    <div class="split-side" style="padding-left: 36px; border-left: 1px solid var(--border);">
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 16px;">Scoring Weights by Type</div>
+      <div class="glass-card" style="padding: 18px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div class="card-title" style="margin: 0;"><i class="ph-bold ph-barbell" style="margin-right: 6px;"></i>Weights</div>
+          <span class="pill" style="font-size: 10px; padding: 2px 10px;">5 metrics</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="score-bar"><span class="score-bar-label">Volume</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 70%;"></div></div><span class="score-bar-value">35%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Calories</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 40%;"></div></div><span class="score-bar-value">20%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Duration</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 30%;"></div></div><span class="score-bar-value">15%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Sets</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 30%;"></div></div><span class="score-bar-value">15%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Reps</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 30%;"></div></div><span class="score-bar-value">15%</span></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div class="card-title" style="margin: 0;"><i class="ph-bold ph-person-simple-run" style="margin-right: 6px;"></i>Cardio</div>
+          <span class="pill pill-accent" style="font-size: 10px; padding: 2px 10px;">2 metrics</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="score-bar"><span class="score-bar-label">Calories</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 60%;"></div></div><span class="score-bar-value">60%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Time</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 40%;"></div></div><span class="score-bar-value">40%</span></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div class="card-title" style="margin: 0;"><i class="ph-bold ph-lightning" style="margin-right: 6px;"></i>Mixed</div>
+          <span class="pill" style="font-size: 10px; padding: 2px 10px;">5 metrics</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="score-bar"><span class="score-bar-label">Calories</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 60%;"></div></div><span class="score-bar-value">30%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Volume</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 50%;"></div></div><span class="score-bar-value">25%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Duration</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 40%;"></div></div><span class="score-bar-value">20%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Sets</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 30%;"></div></div><span class="score-bar-value">15%</span></div>
+          <div class="score-bar"><span class="score-bar-label">Reps</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 20%;"></div></div><span class="score-bar-value">10%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">05 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 6 — HEART RATE PIPELINE (Full-Width)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="slide-padded" style="padding: 40px 52px; z-index: 1;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+      <div>
+        <div class="label-accent" style="margin-bottom: 8px;">Critical Pipeline</div>
+        <h2 class="heading">Heart Rate Capture</h2>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); max-width: 380px; text-align: right; margin: 0;">BLE to chart — foreground and background paths with native Android service bridge</p>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 14px;">
+      <!-- Top row: BLE → Foreground JS -->
+      <div style="display: grid; grid-template-columns: 200px 1fr; gap: 14px; align-items: stretch;">
+        <div class="diagram-layer diagram-layer-accent">
+          <div class="label-accent" style="margin-bottom: 10px; font-size: 10px;">BLE Layer</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">BLE Scan</div><div class="box-sub">UUID: 0x180D</div></div>
+            <div style="text-align: center; color: var(--text-muted); font-size: 12px;">&#8595;</div>
+            <div class="diagram-box"><div class="box-title" style="font-size: 12px;">GATT Connect</div></div>
+          </div>
+        </div>
+        <div class="diagram-layer">
+          <div class="label" style="margin-bottom: 10px; font-size: 10px;">Foreground &middot; JS</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="diagram-box" style="flex: 1;"><div class="box-title" style="font-size: 12px;">useHRMonitor</div><div class="box-sub">React State</div></div>
+            <div style="color: var(--text-muted); font-size: 12px;">→</div>
+            <div class="diagram-box" style="flex: 1;"><div class="box-title" style="font-size: 12px;">useHRLogger</div><div class="box-sub">1s cadence</div></div>
+            <div style="color: var(--text-muted); font-size: 12px;">→</div>
+            <div class="diagram-box" style="flex: 1;"><div class="box-title" style="font-size: 12px;">SQLite</div><div class="box-sub">session_heart_rate</div></div>
+            <div style="color: var(--text-muted); font-size: 12px;">→</div>
+            <div class="diagram-box diagram-box-accent" style="flex: 1;"><div class="box-title" style="font-size: 12px;">FixedHRChart</div><div class="box-sub">Skia SVG</div></div>
+          </div>
+        </div>
+      </div>
+      <!-- Bottom row: Background + Resume -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="diagram-layer">
+          <div class="label" style="margin-bottom: 10px; font-size: 10px;">Background &middot; Native</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="diagram-box diagram-box-accent" style="flex: 1;"><div class="box-title" style="font-size: 12px;">Foreground Service</div><div class="box-sub">Kotlin GATT</div></div>
+            <div style="color: var(--text-muted); font-size: 12px;">→</div>
+            <div class="diagram-box" style="flex: 1;"><div class="box-title" style="font-size: 12px;">SharedPreferences</div><div class="box-sub">HR samples</div></div>
+          </div>
+        </div>
+        <div class="diagram-layer">
+          <div class="label" style="margin-bottom: 10px; font-size: 10px;">On Resume</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="diagram-box" style="flex: 1;"><div class="box-title" style="font-size: 12px;">consumeHR()</div></div>
+            <div style="color: var(--text-muted); font-size: 12px;">→</div>
+            <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+              <div class="diagram-box" style="padding: 8px 10px;"><div class="box-title" style="font-size: 11px;">SQLite</div></div>
+              <div class="diagram-box" style="padding: 8px 10px;"><div class="box-title" style="font-size: 11px;">Chart</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Constraint cards -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+        <div class="glass-card" style="padding: 14px; border-color: var(--border-accent);">
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--accent);"><i class="ph-bold ph-warning" style="margin-right: 4px;"></i>Constraint #1</div>
+          <div class="card-body" style="font-size: 11px;"><code class="mono" style="color: var(--accent); font-size: 10px;">startForegroundService()</code> must be called while app is in foreground.</div>
+        </div>
+        <div class="glass-card" style="padding: 14px; border-color: var(--border-accent);">
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--accent);"><i class="ph-bold ph-warning" style="margin-right: 4px;"></i>Constraint #2</div>
+          <div class="card-body" style="font-size: 11px;">Service runs for <strong>entire workout</strong>. Must NOT stop on foreground resume.</div>
+        </div>
+        <div class="glass-card" style="padding: 14px; border-color: var(--border-accent);">
+          <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--accent);"><i class="ph-bold ph-warning" style="margin-right: 4px;"></i>Constraint #3</div>
+          <div class="card-body" style="font-size: 11px;"><code class="mono" style="color: var(--accent); font-size: 10px;">useHRLogger</code> gates on <code class="mono" style="color: var(--accent); font-size: 10px;">isAppActive</code>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">06 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 7 — DATA LAYER (Split)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="split-wide" style="z-index: 1;">
+    <div class="split-side">
+      <div class="label-accent" style="margin-bottom: 8px;">Data Layer</div>
+      <h2 class="heading" style="margin-bottom: 16px;">Offline-First<br>Architecture</h2>
+      <p class="subhead" style="font-size: 14px; margin-bottom: 24px;">
+        All workout data lives in local SQLite. React Query with AsyncStorage persistence provides the caching layer. Firebase handles social features only.
+      </p>
+      <!-- Data flow diagram -->
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div></div>
+          <div class="diagram-box"><div class="box-title">React Component</div></div>
+          <div></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div></div><div style="display: flex; justify-content: center;"><div class="connector-v" style="height: 16px;"></div></div><div></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div></div>
+          <div class="diagram-box diagram-box-accent"><div class="box-title">React Query</div><div class="box-sub">queryFn + mutations</div></div>
+          <div></div>
+        </div>
+        <!-- Branching connector -->
+        <div style="position: relative; height: 28px;">
+          <div style="position: absolute; left: 50%; top: 0; width: 1px; height: 10px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 10px; left: calc(100% / 6); right: calc(100% / 6); height: 1px; background: var(--connector);"></div>
+          <div style="position: absolute; top: 10px; left: calc(100% / 6); width: 1px; height: 18px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 10px; left: 50%; width: 1px; height: 18px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 10px; right: calc(100% / 6); width: 1px; height: 18px; background: var(--connector); transform: translateX(50%);"></div>
+          <div style="position: absolute; top: 2px; right: calc(100% / 6 - 44px); font-size: 8px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">social only</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div class="diagram-box"><div class="box-title" style="font-size: 12px;">SQLite</div><div class="box-sub">30+ tables</div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 12px;">AsyncStorage</div><div class="box-sub">Persisted Client</div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Firestore</div><div class="box-sub">REST fallback</div></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div style="display: flex; justify-content: center;"><div class="connector-v" style="height: 16px;"></div></div>
+          <div></div>
+          <div style="display: flex; justify-content: center;"><div class="connector-v" style="height: 16px;"></div></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div class="diagram-box"><div class="box-title" style="font-size: 12px;">Auto Backup</div><div class="box-sub">JSON export</div></div>
+          <div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 12px;">AsyncStorage</div><div class="box-sub">Profile Cache</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="split-side" style="border-left: 1px solid var(--border);">
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text-secondary);">Core Tables</div>
+      <table class="data-table">
+        <thead><tr><th>Table</th><th>Purpose</th><th>Scale</th></tr></thead>
+        <tbody>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">exercises</code></td><td>Exercise library</td><td style="color: var(--accent);">150+</td></tr>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">sessions</code></td><td>Completed workouts</td><td style="color: var(--accent);">unbounded</td></tr>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">session_sets</code></td><td>Set/rep/weight logs</td><td style="color: var(--accent);">unbounded</td></tr>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">session_heart_rate</code></td><td>1s HR samples</td><td style="color: var(--accent);">unbounded</td></tr>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">health_connect_log</code></td><td>Body composition</td><td style="color: var(--accent);">daily</td></tr>
+          <tr><td><code class="mono" style="color: var(--accent); font-size: 12px;">youvsyou_results</code></td><td>Win/loss records</td><td style="color: var(--accent);">unbounded</td></tr>
+        </tbody>
+      </table>
+      <div class="divider" style="margin: 20px 0;"></div>
+      <div class="glass-card" style="padding: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <i class="ph-bold ph-warning-circle" style="color: var(--accent); font-size: 16px;"></i>
+          <span style="font-size: 13px; font-weight: 600;">JSON-Safe Persistence</span>
+        </div>
+        <div class="code-block" style="font-size: 11px; padding: 12px 16px;">
+<span class="cmt">// Set/Map/Date crash on restore</span>
+<span class="cmt">// JSON.stringify(new Set(['a'])) → "{}"</span>
+
+<span class="kw">return</span> ids.<span class="fn">filter</span>(...)  <span class="cmt">// string[]</span>
+<span class="cmt">// NOT: new Set(ids)</span>
+        </div>
+      </div>
+      <div style="margin-top: 14px; padding: 14px 18px; background: var(--accent-soft); border: 1px solid var(--border-accent); border-radius: 12px;">
+        <div style="font-size: 12px; color: var(--accent); font-weight: 600;"><i class="ph-bold ph-database" style="margin-right: 6px;"></i>Schema Version 12</div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Idempotent migrations with <code class="mono" style="color: var(--text-primary); font-size: 10px;">CREATE TABLE IF NOT EXISTS</code></div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">07 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 8 — ANALYTICS & SCORING (Right-Heavy)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="right-wide" style="z-index: 1;">
+    <div class="split-side">
+      <div class="label-accent" style="margin-bottom: 8px;">Analytics</div>
+      <h2 class="heading" style="margin-bottom: 16px;">Fitness Score<br>& Insights</h2>
+      <p class="subhead" style="font-size: 14px; margin-bottom: 28px;">
+        A composite 0-1000 score that rewards volume, cardio effort, consistency, and competitive engagement.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;">
+        <div class="score-bar"><span class="score-bar-label">Volume</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 100%;"></div></div><span class="score-bar-value">250</span></div>
+        <div class="score-bar"><span class="score-bar-label">Cardio</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 100%; opacity: 0.55;"></div></div><span class="score-bar-value">250</span></div>
+        <div class="score-bar"><span class="score-bar-label">Consistency</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 100%; opacity: 0.4;"></div></div><span class="score-bar-value">250</span></div>
+        <div class="score-bar"><span class="score-bar-label">Competition</span><div class="score-bar-track"><div class="score-bar-fill" style="width: 100%; opacity: 0.25;"></div></div><span class="score-bar-value">250</span></div>
+      </div>
+      <div style="text-align: center; padding: 20px; background: var(--accent-soft); border: 1px solid var(--border-accent); border-radius: 14px;">
+        <div style="font-size: 48px; font-weight: 900; color: var(--accent);">1000</div>
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">Max Fitness Score</div>
+      </div>
+    </div>
+    <div class="split-side" style="border-left: 1px solid var(--border); gap: 14px;">
+      <div class="glass-card" style="padding: 18px;">
+        <div class="card-title" style="margin-bottom: 10px;"><i class="ph-bold ph-fire" style="color: var(--accent); margin-right: 6px;"></i>Calorie Formulas</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: flex; justify-content: space-between;"><span>Polar energy expended</span><span class="pill pill-accent" style="font-size: 10px; padding: 1px 8px;">Priority 1</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>Keytel HR-based formula</span><span class="pill" style="font-size: 10px; padding: 1px 8px;">Priority 2</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>MET fallback (weight × intensity)</span><span class="pill" style="font-size: 10px; padding: 1px 8px;">Fallback</span></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px;">
+        <div class="card-title" style="margin-bottom: 10px;"><i class="ph-bold ph-person-arms-spread" style="color: var(--text-secondary); margin-right: 6px;"></i>Muscle Heatmap</div>
+        <div class="card-body" style="margin-bottom: 12px;">Time-decay volume tracking with 48-hour half-life across 11 muscle groups</div>
+        <div style="display: flex; gap: 3px; align-items: flex-end; height: 40px;">
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 100%; opacity: 0.9;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 75%; opacity: 0.65;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 60%; opacity: 0.5;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 85%; opacity: 0.75;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 40%; opacity: 0.35;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 30%; opacity: 0.25;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 55%; opacity: 0.45;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 70%; opacity: 0.6;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 25%; opacity: 0.2;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 45%; opacity: 0.4;"></div>
+          <div style="width: 18px; background: var(--accent); border-radius: 2px 2px 0 0; height: 20%; opacity: 0.15;"></div>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px;">
+        <div class="card-title" style="margin-bottom: 10px;"><i class="ph-bold ph-chart-bar" style="color: var(--text-secondary); margin-right: 6px;"></i>Body Composition</div>
+        <div class="card-body" style="margin-bottom: 8px;">Dual-axis bezier chart from Health Connect or manual entry</div>
+        <svg width="220" height="40">
+          <polyline points="0,30 20,28 40,25 60,27 80,22 100,20 120,18 140,22 160,19 180,16 200,14 220,12" stroke="var(--accent)" stroke-width="2" fill="none"/>
+          <polyline points="0,35 20,34 40,32 60,33 80,30 100,29 120,28 140,30 160,28 180,26 200,24 220,22" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/>
+        </svg>
+        <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 10px; color: var(--text-muted);">
+          <span><span style="display: inline-block; width: 12px; height: 2px; background: var(--accent); vertical-align: middle; margin-right: 4px;"></span>Weight</span>
+          <span><span style="display: inline-block; width: 12px; height: 2px; background: rgba(255,255,255,0.25); vertical-align: middle; margin-right: 4px;"></span>Body Fat %</span>
+        </div>
+      </div>
+      <div class="glass-card" style="padding: 18px;">
+        <div class="card-title" style="margin-bottom: 10px;"><i class="ph-bold ph-trophy" style="color: var(--accent); margin-right: 6px;"></i>Personal Records</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+          <div><i class="ph ph-arrow-fat-up" style="color: var(--accent); margin-right: 4px;"></i>Max Weight</div>
+          <div><i class="ph ph-arrow-fat-up" style="color: var(--accent); margin-right: 4px;"></i>Max Reps</div>
+          <div><i class="ph ph-timer" style="color: var(--text-secondary); margin-right: 4px;"></i>Fastest Time</div>
+          <div><i class="ph ph-map-pin-line" style="color: var(--text-secondary); margin-right: 4px;"></i>Longest Distance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">08 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 9 — SOCIAL & FIREBASE (Split)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="split" style="z-index: 1;">
+    <div class="split-side" style="padding-right: 36px;">
+      <div class="label-accent" style="margin-bottom: 8px;">Social Layer</div>
+      <h2 class="heading-lg" style="margin-bottom: 16px;">
+        Friends &<br><span style="color: var(--accent);">Competition</span>
+      </h2>
+      <p class="subhead" style="font-size: 14px; margin-bottom: 24px;">
+        Firebase-powered social features — friend codes, shared workouts, challenges, and activity feed. Auth via email magic links.
+      </p>
+      <!-- Social flow — HTML/CSS diagram -->
+      <div style="display: flex; flex-direction: column; gap: 0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="diagram-box diagram-box-accent"><div class="box-title" style="font-size: 11px;">Firebase Auth</div><div class="box-sub">Anonymous → Magic Link</div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 11px;">Friend Codes</div><div class="box-sub">QR + share link</div></div>
+        </div>
+        <!-- Branching from 2 sources to center -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div style="display: flex; justify-content: center;"><div class="connector-v" style="height: 14px;"></div></div>
+          <div style="display: flex; justify-content: center;"><div class="connector-v" style="height: 14px;"></div></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="diagram-box"><div class="box-title" style="font-size: 11px;">Firestore Profile</div><div class="box-sub">users/{uid}</div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 11px;">Friend Requests</div><div class="box-sub">uidA_uidB</div></div>
+        </div>
+        <!-- Merge to friends -->
+        <div style="position: relative; height: 24px;">
+          <div style="position: absolute; top: 0; left: 25%; width: 1px; height: 10px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 0; right: 25%; width: 1px; height: 10px; background: var(--connector); transform: translateX(50%);"></div>
+          <div style="position: absolute; top: 10px; left: 25%; right: 25%; height: 1px; background: var(--connector);"></div>
+          <div style="position: absolute; top: 10px; left: 50%; width: 1px; height: 14px; background: var(--connector); transform: translateX(-50%);"></div>
+        </div>
+        <div class="diagram-box diagram-box-accent" style="text-align: center;"><div class="box-title" style="font-size: 11px;">Friends List</div></div>
+        <!-- Branch to share + challenges -->
+        <div style="position: relative; height: 24px;">
+          <div style="position: absolute; left: 50%; top: 0; width: 1px; height: 10px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 10px; left: 25%; right: 25%; height: 1px; background: var(--connector);"></div>
+          <div style="position: absolute; top: 10px; left: 25%; width: 1px; height: 14px; background: var(--connector); transform: translateX(-50%);"></div>
+          <div style="position: absolute; top: 10px; right: 25%; width: 1px; height: 14px; background: var(--connector); transform: translateX(50%);"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="diagram-box"><div class="box-title" style="font-size: 11px;">Shared Workouts</div><div class="box-sub">→ Activity Feed</div></div>
+          <div class="diagram-box"><div class="box-title" style="font-size: 11px;">Challenges</div><div class="box-sub">Head-to-head</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="split-side" style="padding-left: 36px; border-left: 1px solid var(--border);">
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 16px;"><i class="ph-bold ph-cloud" style="color: var(--accent); margin-right: 6px;"></i>Firestore Collections</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px;">
+          <code class="mono" style="color: var(--accent); font-size: 12px; width: 140px;">users/{uid}</code>
+          <span style="font-size: 12px; color: var(--text-secondary);">Profile, friends list, blocked IDs</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px;">
+          <code class="mono" style="color: var(--accent); font-size: 12px; width: 140px;">public_profiles</code>
+          <span style="font-size: 12px; color: var(--text-secondary);">Friend-accessible statistics</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px;">
+          <code class="mono" style="color: var(--accent); font-size: 12px; width: 140px;">friend_requests</code>
+          <span style="font-size: 12px; color: var(--text-secondary);">Pending / accepted state</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px;">
+          <code class="mono" style="color: var(--accent); font-size: 12px; width: 140px;">shared_workouts</code>
+          <span style="font-size: 12px; color: var(--text-secondary);">Templates shared to feed</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px;">
+          <code class="mono" style="color: var(--accent); font-size: 12px; width: 140px;">challenges</code>
+          <span style="font-size: 12px; color: var(--text-secondary);">Head-to-head competitions</span>
+        </div>
+      </div>
+      <div class="divider" style="margin-bottom: 20px;"></div>
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 14px;"><i class="ph-bold ph-key" style="color: var(--text-secondary); margin-right: 6px;"></i>Auth Flow</div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div><div style="font-size: 13px; font-weight: 600;">Anonymous Sign-In</div><div style="font-size: 11px; color: var(--text-secondary);">Auto-created on first launch</div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot timeline-dot-accent"></div>
+        <div><div style="font-size: 13px; font-weight: 600;">Email Magic Link</div><div style="font-size: 11px; color: var(--text-secondary);">No password required</div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div><div style="font-size: 13px; font-weight: 600;">UID Sync</div><div style="font-size: 11px; color: var(--text-secondary);">Anonymous UID linked, data preserved</div></div>
+      </div>
+      <div class="timeline-item" style="padding-bottom: 0;">
+        <div class="timeline-dot timeline-dot-accent"></div>
+        <div><div style="font-size: 13px; font-weight: 600;">Social Unlocked</div><div style="font-size: 11px; color: var(--text-secondary);">Friends, sharing, challenges, push</div></div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">09 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 10 — TECH STACK (Full Grid)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div class="slide-padded" style="z-index: 1;">
+    <div style="text-align: center; margin-bottom: 36px;">
+      <div class="label-accent" style="margin-bottom: 8px;">Tech Stack</div>
+      <h2 class="heading">Built With</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-atom" style="color: var(--accent); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">React Native</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">0.81.5</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-rocket" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Expo</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">SDK 54</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-file-ts" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">TypeScript</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">5.9.2</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-fire" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Firebase</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">23.8.6</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-database" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">SQLite</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">expo-sqlite</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-arrows-clockwise" style="color: var(--accent); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">React Query</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">5.90.20</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-cube" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Zustand</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">5.0.10</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-bell-ringing" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">OneSignal</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">5.3.1</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-bluetooth" style="color: var(--accent); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">BLE (ble-plx)</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">3.5.0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-heartbeat" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Health Connect</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">3.5.0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-paint-brush" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Skia</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">2.2.12</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-waveform" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Reanimated</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">4.1.1</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-map-pin" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">GPS + Kalman</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">expo-location</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-bug" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">Sentry</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">8.0.0</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-package" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">EAS Build</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">Expo</div>
+      </div>
+      <div class="glass-card" style="padding: 16px; text-align: center;">
+        <i class="ph-bold ph-wind" style="color: var(--text-secondary); margin-bottom: 8px; display: block; font-size: 24px;"></i>
+        <div class="card-title" style="font-size: 13px;">NativeWind</div>
+        <div class="mono" style="font-size: 10px; color: var(--text-muted);">4.2.1</div>
+      </div>
+    </div>
+  </div>
+  <span class="slide-number">10 / 11</span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 11 — CURRENT STATE (Centered)
+     ═══════════════════════════════════════════════════════ -->
+<div class="slide noise">
+  <div style="position: absolute; inset: 0; pointer-events: none; z-index: 0;">
+    <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 800px; height: 400px; background: radial-gradient(ellipse, rgba(107,141,239,0.04) 0%, transparent 70%);"></div>
+  </div>
+  <div class="slide-padded" style="z-index: 1;">
+    <div style="text-align: center; margin-bottom: 36px;">
+      <div class="label-accent" style="margin-bottom: 8px;">Current State</div>
+      <h2 class="heading-lg">v3.1.0 — <span style="color: var(--accent);">Ship It</span></h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr; gap: 0;">
+      <div style="padding: 0 28px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);"><i class="ph-bold ph-check-circle" style="margin-right: 4px; color: var(--accent);"></i>Completed</div>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text-secondary);">
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Flat tile redesign (v3.0)</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Background HR pipeline</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>You vs You scoring engine</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Social MVP (friends, feed)</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Health Connect integration</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Push notifications (OneSignal)</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-check-circle" style="color: rgba(255,255,255,0.2); margin-top: 2px;"></i><span>Skia HR chart migration</span></div>
+        </div>
+      </div>
+      <div style="background: var(--border);"></div>
+      <div style="padding: 0 28px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--accent);"><i class="ph-bold ph-circle-notch" style="margin-right: 4px;"></i>In Progress</div>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text-secondary);">
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-caret-right" style="color: var(--accent); margin-top: 2px;"></i><span>iOS App Store submission</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-caret-right" style="color: var(--accent); margin-top: 2px;"></i><span>Store metadata & screenshots</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-caret-right" style="color: var(--accent); margin-top: 2px;"></i><span>Google Sign-In on EAS build</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-caret-right" style="color: var(--accent); margin-top: 2px;"></i><span>Friend request polling</span></div>
+        </div>
+      </div>
+      <div style="background: var(--border);"></div>
+      <div style="padding: 0 28px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);"><i class="ph-bold ph-crosshair" style="margin-right: 4px; color: var(--text-muted);"></i>Next Up</div>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text-secondary);">
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-circle" style="color: rgba(255,255,255,0.15); margin-top: 4px; font-size: 8px;"></i><span>Play Store submission</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-circle" style="color: rgba(255,255,255,0.15); margin-top: 4px; font-size: 8px;"></i><span>Apple review compliance</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-circle" style="color: rgba(255,255,255,0.15); margin-top: 4px; font-size: 8px;"></i><span>Performance audit</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-circle" style="color: rgba(255,255,255,0.15); margin-top: 4px; font-size: 8px;"></i><span>Achievement system</span></div>
+          <div style="display: flex; gap: 8px;"><i class="ph-fill ph-circle" style="color: rgba(255,255,255,0.15); margin-top: 4px; font-size: 8px;"></i><span>Workout AI generation</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; display: flex; justify-content: center; gap: 48px; padding-top: 24px; border-top: 1px solid var(--border);">
+      <div class="stat"><div class="stat-value" style="font-size: 28px;">30+</div><div class="stat-label" style="font-size: 10px;">SQLite Tables</div></div>
+      <div class="stat"><div class="stat-value" style="font-size: 28px;">20+</div><div class="stat-label" style="font-size: 10px;">Screens</div></div>
+      <div class="stat"><div class="stat-value" style="font-size: 28px;">50+</div><div class="stat-label" style="font-size: 10px;">Dependencies</div></div>
+      <div class="stat"><div class="stat-value" style="font-size: 28px;">2</div><div class="stat-label" style="font-size: 10px;">Platforms</div></div>
+      <div class="stat"><div class="stat-value" style="font-size: 28px; color: var(--accent);">3.1.0</div><div class="stat-label" style="font-size: 10px;">Version</div></div>
+    </div>
+  </div>
+  <span class="slide-number">11 / 11</span>
+</div>
+
+</div><!-- /deck -->
+</body>
+</html>
